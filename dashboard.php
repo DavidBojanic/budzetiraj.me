@@ -11,10 +11,22 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 
 $current_month = date('Y-m');
-$total_income_result = $conn->query("SELECT SUM(amount) AS total_income FROM income WHERE user_id = $user_id AND DATE_FORMAT(date, '%Y-%m') = '$current_month'");
+$total_income_result = $conn->query("
+    SELECT SUM(amount) AS total_income FROM income 
+    WHERE user_id = $user_id AND DATE_FORMAT(date, '%Y-%m') = '$current_month'
+    UNION
+    SELECT SUM(amount) AS total_income FROM recurring_incomes
+    WHERE user_id = $user_id AND (end_date IS NULL OR end_date >= '$current_month-01') AND start_date <= '$current_month-31'
+");
 $total_income = $total_income_result->fetch_assoc()['total_income'];
 
-$total_expense_result = $conn->query("SELECT SUM(amount) AS total_expense FROM expenses WHERE user_id = $user_id AND DATE_FORMAT(date, '%Y-%m') = '$current_month'");
+$total_expense_result = $conn->query("
+    SELECT SUM(amount) AS total_expense FROM expenses 
+    WHERE user_id = $user_id AND DATE_FORMAT(date, '%Y-%m') = '$current_month'
+    UNION
+    SELECT SUM(amount) AS total_expense FROM recurring_expenses
+    WHERE user_id = $user_id AND (end_date IS NULL OR end_date >= '$current_month-01') AND start_date <= '$current_month-31'
+");
 $total_expense = $total_expense_result->fetch_assoc()['total_expense'];
 
 $net_balance = $total_income - $total_expense;
@@ -22,9 +34,13 @@ $net_balance = $total_income - $total_expense;
 $recent_transactions = $conn->query("
     (SELECT 'Income' AS type, amount, category, date, description FROM income WHERE user_id = $user_id AND DATE_FORMAT(date, '%Y-%m') = '$current_month')
     UNION
+    (SELECT 'Income' AS type, amount, category, start_date AS date, description FROM recurring_incomes WHERE user_id = $user_id AND (end_date IS NULL OR end_date >= '$current_month-01') AND start_date <= '$current_month-31')
+    UNION
     (SELECT 'Expense' AS type, amount, category, date, description FROM expenses WHERE user_id = $user_id AND DATE_FORMAT(date, '%Y-%m') = '$current_month')
+    UNION
+    (SELECT 'Expense' AS type, amount, category, start_date AS date, description FROM recurring_expenses WHERE user_id = $user_id AND (end_date IS NULL OR end_date >= '$current_month-01') AND start_date <= '$current_month-31')
     ORDER BY date DESC
-    LIMIT 5
+    LIMIT 10
 ");
 
 $budget_data = $conn->query("SELECT category, amount FROM budgets WHERE user_id = $user_id AND DATE_FORMAT(CONCAT(year, '-', month, '-01'), '%Y-%m') = '$current_month'");
@@ -55,26 +71,26 @@ $conn->close();
 <div class="container mt-4">
     <div class="row">
         <div class="col-md-4">
-            <div class="card text-white bg-success mb-3 card-with-texture">
+            <div class="card text-white mb-3" style="background-color: #1E90FF;">
                 <div class="card-header">This Month's Income</div>
                 <div class="card-body">
-                    <h5 class="card-title"><?= number_format($total_income, 2) ?> €</h5>
+                    <h5 class="card-title"><?= number_format($total_income, 2, ',', '.') ?> €</h5>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card text-white bg-danger mb-3 card-with-texture">
+            <div class="card text-white mb-3" style="background-color: #FF6347;">
                 <div class="card-header">This Month's Expenses</div>
                 <div class="card-body">
-                    <h5 class="card-title"><?= number_format($total_expense, 2) ?> €</h5>
+                    <h5 class="card-title"><?= number_format($total_expense, 2, ',', '.') ?> €</h5>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card text-white bg-info mb-3 card-with-texture">
+            <div class="card text-white mb-3" style="background-color: #20B2AA;">
                 <div class="card-header">This Month's Net Balance</div>
                 <div class="card-body">
-                    <h5 class="card-title"><?= number_format($net_balance, 2) ?> €</h5>
+                    <h5 class="card-title"><?= number_format($net_balance, 2, ',', '.') ?> €</h5>
                 </div>
             </div>
         </div>
@@ -110,9 +126,9 @@ $conn->close();
                         <span class="text-danger"><i class="fas fa-arrow-down"></i> <?= $entry['type'] ?></span>
                     <?php endif; ?>
                 </td>
-                <td><?= number_format($entry['amount'], 2) ?> €</td>
+                <td><?= number_format($entry['amount'], 2, ',', '.') ?> €</td>
                 <td><?= $entry['category'] ?></td>
-                <td><?= $entry['date'] ?></td>
+                <td><?= date('d-m-Y', strtotime($entry['date'])) ?></td>
                 <td><?= $entry['description'] ?></td>
             </tr>
             <?php endwhile; ?>
@@ -132,12 +148,11 @@ $conn->close();
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Budget vs. Spending Chart
     const chartData = <?php echo json_encode($chart_data); ?>;
     const categories = chartData.map(item => item.category);
     const budgetData = chartData.map(item => item.budget);
     const actualSpendingData = chartData.map(item => item.actual_spending);
-    
+
     const ctx = document.getElementById('budgetVsSpendingChart').getContext('2d');
     new Chart(ctx, {
         type: 'bar',
@@ -147,15 +162,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 {
                     label: 'Budget',
                     data: budgetData,
-                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(30, 144, 255, 0.8)',  
+                    borderColor: 'rgba(30, 144, 255, 1)',
                     borderWidth: 1
                 },
                 {
                     label: 'Actual Spending',
                     data: actualSpendingData,
-                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 71, 0.8)',  
+                    borderColor: 'rgba(255, 99, 71, 1)',
                     borderWidth: 1
                 }
             ]
@@ -165,7 +180,12 @@ document.addEventListener('DOMContentLoaded', function() {
             maintainAspectRatio: false,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value + ' €';
+                        }
+                    }
                 },
                 x: {
                     grid: {
