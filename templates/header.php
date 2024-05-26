@@ -16,7 +16,10 @@
     }
     ?>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">budzetiraj.me</a>
+        <a class="navbar-brand" href="#">
+            <img src="bik4.png" class="logo-img" alt="logo">
+            budzetiraj.me
+        </a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -29,7 +32,6 @@
                     echo '<li class="nav-item"><a class="nav-link" href="expenses.php">Add Expense</a></li>';
                     echo '<li class="nav-item"><a class="nav-link" href="budget.php">Manage Budget</a></li>';
                     echo '<li class="nav-item"><a class="nav-link" href="reports.php">View Reports</a></li>';
-                    echo '<li class="nav-item"><a class="nav-link" href="settings.php">Settings</a></li>';
                     echo '<li class="nav-item"><a class="nav-link" href="logout.php">Logout</a></li>';
                 } else {
                     echo '<li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>';

@@ -58,10 +58,24 @@ while ($row = $actual_spending_data->fetch_assoc()) {
 $categories = array_unique(array_merge(array_keys($budget), array_keys($actual_spending)));
 $chart_data = [];
 foreach ($categories as $category) {
+    $budget_amount = $budget[$category] ?? 0;
+    $actual_amount = $actual_spending[$category] ?? 0;
+    $percentage_used = $budget_amount > 0 ? ($actual_amount / $budget_amount) * 100 : 0;
+
+    $color = 'rgba(17, 140, 79, 0.9)'; 
+    if ($percentage_used >= 100) {
+        $color = 'rgba(255, 99, 132, 0.9)'; 
+    } elseif ($percentage_used >= 75) {
+        $color = 'rgba(255, 99, 71, 0.9)'; 
+    } elseif ($percentage_used >= 50) {
+        $color = 'rgba(255, 159, 64, 0.9)'; 
+    }
+
     $chart_data[] = [
         'category' => $category,
-        'budget' => $budget[$category] ?? 0,
-        'actual_spending' => $actual_spending[$category] ?? 0
+        'budget' => $budget_amount,
+        'actual_spending' => $actual_amount,
+        'color' => $color
     ];
 }
 
@@ -71,7 +85,7 @@ $conn->close();
 <div class="container mt-4">
     <div class="row">
         <div class="col-md-4">
-            <div class="card text-white mb-3" style="background-color: #1E90FF;">
+            <div class="card text-white mb-3 card-with-texture" style="background-color: #1E90FF;">
                 <div class="card-header">This Month's Income</div>
                 <div class="card-body">
                     <h5 class="card-title"><?= number_format($total_income, 2, ',', '.') ?> €</h5>
@@ -79,7 +93,7 @@ $conn->close();
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card text-white mb-3" style="background-color: #FF6347;">
+            <div class="card text-white mb-3 card-with-texture" style="background-color: #FF6347;">
                 <div class="card-header">This Month's Expenses</div>
                 <div class="card-body">
                     <h5 class="card-title"><?= number_format($total_expense, 2, ',', '.') ?> €</h5>
@@ -87,7 +101,7 @@ $conn->close();
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card text-white mb-3" style="background-color: #20B2AA;">
+            <div class="card text-white mb-3 card-with-texture" style="background-color: #20B2AA;">
                 <div class="card-header">This Month's Net Balance</div>
                 <div class="card-body">
                     <h5 class="card-title"><?= number_format($net_balance, 2, ',', '.') ?> €</h5>
@@ -152,6 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const categories = chartData.map(item => item.category);
     const budgetData = chartData.map(item => item.budget);
     const actualSpendingData = chartData.map(item => item.actual_spending);
+    const colors = chartData.map(item => item.color);
 
     const ctx = document.getElementById('budgetVsSpendingChart').getContext('2d');
     new Chart(ctx, {
@@ -169,8 +184,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 {
                     label: 'Actual Spending',
                     data: actualSpendingData,
-                    backgroundColor: 'rgba(255, 99, 71, 0.8)',  
-                    borderColor: 'rgba(255, 99, 71, 1)',
+                    backgroundColor: colors,
+                    borderColor: colors.map(color => color.replace('0.8', '1')),
                     borderWidth: 1
                 }
             ]
@@ -197,6 +212,23 @@ document.addEventListener('DOMContentLoaded', function() {
             plugins: {
                 legend: {
                     position: 'top',
+                    labels: {
+                        generateLabels: function(chart) {
+                            const datasets = chart.data.datasets;
+                            const labels = chart.data.labels;
+                            return datasets[1].data.map((data, i) => ({
+                                text: `${labels[i]}: ${data} €`,
+                                fillStyle: datasets[1].backgroundColor[i],
+                                hidden: false,
+                                lineCap: 'butt',
+                                lineDash: [],
+                                lineDashOffset: 0,
+                                lineJoin: 'miter',
+                                strokeStyle: datasets[1].borderColor[i],
+                                pointStyle: 'circle'
+                            }));
+                        }
+                    }
                 },
                 title: {
                     display: true,
@@ -210,7 +242,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <style>
 .card-with-texture {
-    background-image: url('https://www.transparenttextures.com/patterns/asfalt-dark.png'); 
+    background-image: url('https://www.transparenttextures.com/patterns/cartographer.png');
     background-size: cover;
 }
 .chart-container {

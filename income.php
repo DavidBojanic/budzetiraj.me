@@ -88,15 +88,15 @@ $conn->close();
 <div class="container mt-4">
     <h2>Add Income</h2>
     <form action="income.php" method="post" class="needs-validation" novalidate>
-        <div class="form-row">
-            <div class="form-group col-md-4">
+        <div class="centered-form">
+            <div class="form-group">
                 <label for="amount">Amount:</label>
                 <input type="number" step="0.01" id="amount" name="amount" class="form-control" placeholder="Amount" required>
                 <div class="invalid-feedback">
                     Please enter a valid amount.
                 </div>
             </div>
-            <div class="form-group col-md-4">
+            <div class="form-group">
                 <label for="category">Category:</label>
                 <select id="category" name="category" class="form-control" onchange="toggleCustomCategory(this)" required>
                     <?php foreach ($default_categories as $category): ?>
@@ -108,45 +108,43 @@ $conn->close();
                     Please select a category.
                 </div>
             </div>
-            <div class="form-group col-md-4" id="customCategoryDiv" style="display:none;">
+            <div class="form-group wide" id="customCategoryDiv" style="display:none;">
                 <label for="custom_category">Custom Category:</label>
                 <input type="text" id="custom_category" name="custom_category" class="form-control" placeholder="Custom Category">
             </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group col-md-4">
+            <div class="form-group">
                 <label for="date">Date:</label>
                 <input type="date" id="date" name="date" class="form-control">
                 <div class="invalid-feedback">
                     Please enter a valid date.
                 </div>
             </div>
-            <div class="form-group col-md-4">
+            <div class="form-group">
                 <label for="description">Description:</label>
                 <textarea id="description" name="description" class="form-control" placeholder="Description"></textarea>
             </div>
-        </div>
-        <div class="form-group form-check">
-            <input type="checkbox" class="form-check-input" id="is_recurring" name="is_recurring">
-            <label class="form-check-label" for="is_recurring">Recurring</label>
-        </div>
-        <div id="recurringOptions" style="display:none;">
-            <div class="form-row">
-                <div class="form-group col-md-4">
+            <div class="form-group wide">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="is_recurring" name="is_recurring">
+                    <label class="form-check-label" for="is_recurring">Recurring</label>
+                </div>
+            </div>
+            <div class="form-group" id="recurringOptions" style="display:none;">
+                <div class="form-group">
                     <label for="start_date">Start Date:</label>
                     <input type="date" id="start_date" name="start_date" class="form-control">
                     <div class="invalid-feedback">
                         Please enter a valid start date.
                     </div>
                 </div>
-                <div class="form-group col-md-4">
+                <div class="form-group">
                     <label for="end_date">End Date:</label>
                     <input type="date" id="end_date" name="end_date" class="form-control">
                     <div class="invalid-feedback">
                         End date cannot be before start date.
                     </div>
                 </div>
-                <div class="form-group col-md-4">
+                <div class="form-group">
                     <label for="interval">Interval:</label>
                     <select id="interval" name="interval" class="form-control">
                         <option value="daily">Daily</option>
@@ -156,7 +154,9 @@ $conn->close();
                 </div>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Add Income</button>
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary">Add Income</button>
+        </div>
     </form>
 
     <h3 class="mt-4">Income Entries</h3>
@@ -175,7 +175,7 @@ $conn->close();
         <tbody>
             <?php while ($entry = $income_entries->fetch_assoc()): ?>
             <tr>
-                <td><?= number_format($entry['amount'], 2, ',', '.') ?> €</td>
+                <td class='amount-income'><?= number_format($entry['amount'], 2, ',', '.') ?> €</td>
                 <td><?= $entry['category'] ?></td>
                 <td><?= date('d-m-Y', strtotime($entry['date'])) ?></td>
                 <td><?= $entry['description'] ?></td>

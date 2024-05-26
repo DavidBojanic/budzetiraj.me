@@ -175,7 +175,7 @@ $conn->close();
         <tbody>
             <?php while ($entry = $expense_entries->fetch_assoc()): ?>
             <tr>
-                <td><?= number_format($entry['amount'], 2, ',', '.') ?> €</td>
+                <td class="amount-expense"><?= number_format($entry['amount'], 2, ',', '.') ?> €</td>
                 <td><?= $entry['category'] ?></td>
                 <td><?= date('d-m-Y', strtotime($entry['date'])) ?></td>
                 <td><?= $entry['description'] ?></td>
